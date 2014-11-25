@@ -26,6 +26,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name="com.example.mytest.Test" />
+        <meta-data android:value="@string/facebook_app_id" android:name="com.facebook.sdk.ApplicationId"/>
     </application>
 
 </manifest>

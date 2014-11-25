@@ -15,8 +15,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-
-
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
@@ -27,19 +25,10 @@ import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 
-
-
-
-
-
-
-
-
-
-
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -56,6 +45,19 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
+import com.facebook.Request;
+import com.facebook.Response;
+import com.facebook.Session;
+import com.facebook.SessionState;
+import com.facebook.UiLifecycleHelper;
+import com.facebook.android.AsyncFacebookRunner;
+import com.facebook.android.DialogError;
+import com.facebook.android.Facebook;
+import com.facebook.android.FacebookError;
+import com.facebook.android.Facebook.DialogListener;
+import com.facebook.model.GraphUser;
+import com.facebook.widget.LoginButton;
+import com.facebook.widget.LoginButton.UserInfoChangedCallback;
 
 
 public class MainActivity extends Activity {
@@ -71,7 +73,7 @@ public class MainActivity extends Activity {
 	private int serverResponseCode = 0;
 	private String imagepath=null;
 	private ImageView imgPreview;
-	private Button btnCapturePicture,upload;
+	private Button btnCapturePicture,upload,fbshare;
 	private double latitude;
 	private double longitude;
 	HttpPost httppost;
@@ -80,11 +82,10 @@ public class MainActivity extends Activity {
 	private String cityName=null;
 	private String streetname=null;
 	private String state=null;
-	private String postalcode=null;
+	
 	JSONParser jsonParser = new JSONParser();
 	private static String url_upload = "http://phpmadmin.mybluemix.net/address.php";
-	private static final String TAG_SUCCESS = "success";
-	private static final String TAG_MESG = "message";
+	
 	GPSTracker gps;
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -107,6 +108,7 @@ public class MainActivity extends Activity {
 		imgPreview = (ImageView) findViewById(R.id.imgPreview);
 		btnCapturePicture = (Button) findViewById(R.id.btnCapturePicture);
 		upload = (Button)findViewById(R.id.btnupload);
+		fbshare = (Button)findViewById(R.id.fbshare);
 		upLoadServerUri = "http://phpmadmin.mybluemix.net/mail.php";
 		
 
@@ -134,7 +136,39 @@ public class MainActivity extends Activity {
 				
 			}
 		});
+		
+		fbshare.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				Geocoder gcd = new Geocoder(getBaseContext(),   
+				         Locale.getDefault());               
+				            List<Address>  addresses;    
+				            try {    
+				            addresses = gcd.getFromLocation(gps.getLatitude(), gps  
+				         .getLongitude(), 1);    
+				            if (addresses.size() > 0)    
+				                  
+				             streetname=addresses.get(0).getAddressLine(0) + addresses.get(0).getAddressLine(1); 
+				               cityName=addresses.get(0).getLocality();
+				               state=addresses.get(0).getAdminArea();
+				               
+				               //Toast.makeText(getApplicationContext(), "Your Location is - \nstreet: " + streetname + "\ncity: " + cityName + "\nstate: " +state + "\npincode: " +postalcode, Toast.LENGTH_LONG).show();	
+				               
+				              } catch (IOException e) {              
+				              e.printStackTrace();    
+				            }  
+				           if (imagepath == null)
+				           {
+				        	   Toast.makeText(getApplicationContext(), "please capture an image using capture image button", Toast.LENGTH_LONG).show();
+				           }
+				           else{
+				shareImage(imagepath,streetname,cityName,state);
+				           }
+			}
+		});
 
+		
 		// Checking camera availability
 		if (!isDeviceSupportCamera()) {
 			Toast.makeText(getApplicationContext(),
@@ -480,4 +514,28 @@ uploadFile(imagepath);
 		return serverResponseCode;
 	 }
 	 }
+	
+	 private void shareImage(String imageuri,String street,String city,String staten) {
+	        Intent share = new Intent(Intent.ACTION_SEND);
+	 
+	        // If you want to share a png image only, you can do:
+	        // setType("image/png"); OR for jpeg: setType("image/jpeg");
+	        share.setType("image/*");
+	 
+	        // Make sure you put example png image named myImage.png in your
+	        // directory
+	       
+	 
+	        File imageFileToShare = new File(imageuri);
+	 
+	        Uri uri = Uri.fromFile(imageFileToShare);
+	        share.putExtra(Intent.EXTRA_TEXT, "join hands with me to clean"+street +", "+city+","+staten );
+	        share.putExtra(Intent.EXTRA_STREAM, uri);
+	 
+	        startActivity(Intent.createChooser(share, "Share Image!"));
+	    }
+
+	 
+	
+		
 }
